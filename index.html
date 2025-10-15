@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fashion Suite - True Virtual Try-On</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .selected-design {
+            box-shadow: 0 0 0 4px #3b82f6;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-6xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-gray-900">AI Fashion Suite</h1>
+            <p class="text-lg text-gray-600 mt-2">Design, Visualize, and Experience a True Virtual Try-On.</p>
+        </header>
+
+        <!-- Step 1: Designer -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800"><span class="bg-blue-600 text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">1</span> Describe The Dress</h2>
+            <textarea id="prompt" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" placeholder="Describe the dress itself. For example: 'A-line midi dress in a vibrant floral print cotton, with puff sleeves and a square neckline.'"></textarea>
+            <button id="generateBtn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-300 ease-in-out transform hover:scale-105">
+                Generate 4 Dress Images
+            </button>
+        </div>
+        
+        <!-- Step 2: Gallery -->
+        <div id="gallery" class="w-full mb-8">
+             <div id="gallery-header" class="hidden">
+                 <h2 class="text-2xl font-bold mb-4 text-gray-800"><span class="bg-blue-600 text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">2</span> Select Your Favorite Dress</h2>
+            </div>
+            <div id="loading-indicator" class="hidden flex-col items-center justify-center text-center p-8">
+                <div class="loader mb-4"></div><p class="text-lg font-medium text-gray-600">Generating product shots of your dress...</p>
+            </div>
+            <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+            <div id="placeholder" class="text-center p-10 border-2 border-dashed border-gray-300 rounded-2xl">
+                <h3 class="mt-2 text-lg font-medium text-gray-900">Your generated dress images will appear here.</h3>
+            </div>
+        </div>
+
+        <!-- Step 3: Virtual Try-On -->
+        <div id="virtual-try-on" class="bg-white p-6 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800"><span class="bg-blue-600 text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">3</span> True Virtual Try-On</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <!-- Inputs -->
+                <div>
+                     <h3 class="text-lg font-semibold mb-2 text-gray-700">Upload Your Photo</h3>
+                     <p class="text-sm text-gray-500 mb-4">For best results, use a clear, full-body photo where your clothes are relatively form-fitting.</p>
+                     <div id="photo-upload-area" class="w-full aspect-[9/16] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden">
+                        <img id="userPhoto" class="hidden absolute w-full h-full object-cover" />
+                        <div id="photo-upload-prompt" class="text-center text-gray-500 p-4">
+                            <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                            <span class="mt-2 block font-medium">Click to upload</span>
+                        </div>
+                        <input type="file" id="photoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+                    </div>
+                </div>
+                 <!-- Result -->
+                <div>
+                     <h3 class="text-lg font-semibold mb-2 text-gray-700">Your Virtual Try-On</h3>
+                     <p class="text-sm text-gray-500 mb-4">The AI will generate a new image of you wearing the selected dress.</p>
+                    <div id="try-on-result-area" class="w-full aspect-[9/16] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden">
+                        <img id="tryOnResultImage" class="hidden absolute w-full h-full object-cover"/>
+                        <div id="try-on-loading" class="hidden flex-col items-center justify-center text-center p-8">
+                            <div class="loader mb-4"></div>
+                            <p class="text-lg font-medium text-gray-600">Performing virtual try-on...<br>This is complex and may take a minute.</p>
+                        </div>
+                        <div id="try-on-prompt" class="text-center text-gray-500 p-4">
+                            <p>Your result will appear here after uploading a photo and selecting a design.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <button id="generateTryOnBtn" disabled class="mt-6 w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Generate Virtual Try-On
+            </button>
+             <div id="try-on-error" class="hidden mt-4 text-center p-4 bg-red-100 text-red-700 rounded-lg"></div>
+        </div>
+
+        <!-- Step 4: Styling Advice (NEW GEMINI API FEATURE) -->
+        <div id="styling-advice-section" class="hidden bg-white p-6 rounded-2xl shadow-lg mt-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <span class="bg-blue-600 text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">4</span> 
+                Complete Your Look
+            </h2>
+            <p class="text-gray-600 mb-4">Get AI-powered styling advice for your new dress!</p>
+            <button id="getStylingAdviceBtn" class="w-full bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 transition duration-300 ease-in-out">
+                ✨ Get Styling Advice
+            </button>
+            <div id="styling-advice-result-area" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
+                <div id="styling-loading" class="hidden flex-col items-center justify-center text-center p-4">
+                    <div class="loader mb-4"></div>
+                    <p class="text-lg font-medium text-gray-600">Your personal stylist is thinking...</p>
+                </div>
+                <div id="styling-advice-content" class="prose max-w-none text-gray-700"></div>
+                <div id="styling-error" class="hidden text-center p-4 bg-red-100 text-red-700 rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const generateBtn = document.getElementById('generateBtn');
+        const promptInput = document.getElementById('prompt');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const resultsGrid = document.getElementById('results-grid');
+        const placeholder = document.getElementById('placeholder');
+        const galleryHeader = document.getElementById('gallery-header');
+        
+        const photoUpload = document.getElementById('photoUpload');
+        const userPhoto = document.getElementById('userPhoto');
+        const photoUploadPrompt = document.getElementById('photo-upload-prompt');
+        
+        const generateTryOnBtn = document.getElementById('generateTryOnBtn');
+        const tryOnResultImage = document.getElementById('tryOnResultImage');
+        const tryOnLoading = document.getElementById('try-on-loading');
+        const tryOnPrompt = document.getElementById('try-on-prompt');
+        const tryOnError = document.getElementById('try-on-error');
+
+        // New Styling Advice elements
+        const stylingAdviceSection = document.getElementById('styling-advice-section');
+        const getStylingAdviceBtn = document.getElementById('getStylingAdviceBtn');
+        const stylingAdviceResultArea = document.getElementById('styling-advice-result-area');
+        const stylingLoading = document.getElementById('styling-loading');
+        const stylingAdviceContent = document.getElementById('styling-advice-content');
+        const stylingError = document.getElementById('styling-error');
+
+        // --- State Variables ---
+        let selectedDressBase64 = null;
+        let userPhotoBase64 = null;
+
+        // --- Event Listeners ---
+        generateBtn.addEventListener('click', generateDesigns);
+        resultsGrid.addEventListener('click', handleDesignSelection);
+        photoUpload.addEventListener('change', handlePhotoUpload);
+        generateTryOnBtn.addEventListener('click', generateVirtualTryOn);
+        getStylingAdviceBtn.addEventListener('click', getStylingAdvice);
+        
+        // --- Helper Functions ---
+        function checkTryOnButtonState() {
+             generateTryOnBtn.disabled = !(userPhotoBase64 && selectedDressBase64);
+        }
+        
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+         async function imageUrlToBase64(url) {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // --- AI Model Calls ---
+
+        async function generateDesigns() {
+            const userPrompt = promptInput.value;
+            if (!userPrompt) { alert("Please describe the dress."); return; }
+            
+            const engineeredPrompt = ${userPrompt}. Professional fashion product photography of ONLY the garment. The dress should be displayed on a plain white or light gray background. DO NOT show any person, model, or mannequin. Just the dress.;
+
+            resultsGrid.innerHTML = '';
+            placeholder.classList.add('hidden');
+            galleryHeader.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            loadingIndicator.classList.add('flex');
+            generateBtn.disabled = true;
+
+            try {
+                const apiKey = "AIzaSyDs1n0k1tYoBafYWsJOEIcjjT4WPimNHqU";
+                const apiUrl = https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey};
+                const payload = { instances: [{ prompt: engineeredPrompt }], parameters: { "sampleCount": 4 } };
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(HTTP error! status: ${response.status});
+                const result = await response.json();
+
+                if (result.predictions && result.predictions.length > 0) {
+                    galleryHeader.classList.remove('hidden');
+                    result.predictions.forEach((prediction) => {
+                        if (prediction.bytesBase64Encoded) {
+                            const imageUrl = data:image/png;base64,${prediction.bytesBase64Encoded};
+                            const imageCard = <div class="bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer design-card"><img src="${imageUrl}" class="w-full h-full object-cover pointer-events-none"></div>;
+                            resultsGrid.innerHTML += imageCard;
+                        }
+                    });
+                    document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
+                } else { throw new Error("No predictions returned."); }
+            } catch (error) {
+                console.error('Error generating designs:', error);
+                placeholder.classList.remove('hidden');
+                placeholder.textContent = "Sorry, couldn't generate dress images. Please try a different prompt.";
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                loadingIndicator.classList.remove('flex');
+                generateBtn.disabled = false;
+            }
+        }
+
+        async function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                userPhoto.src = URL.createObjectURL(file);
+                userPhoto.classList.remove('hidden');
+                photoUploadPrompt.classList.add('hidden');
+                userPhotoBase64 = await fileToBase64(file);
+                checkTryOnButtonState();
+            }
+        }
+
+        async function handleDesignSelection(event) {
+            const selectedCard = event.target.closest('.design-card');
+            if (!selectedCard) return;
+
+            document.querySelectorAll('.design-card').forEach(card => card.classList.remove('selected-design'));
+            selectedCard.classList.add('selected-design');
+            
+            const imageUrl = selectedCard.querySelector('img').src;
+            selectedDressBase64 = await imageUrlToBase64(imageUrl);
+
+            checkTryOnButtonState();
+            document.getElementById('virtual-try-on').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function generateVirtualTryOn() {
+            if (!userPhotoBase64 || !selectedDressBase64) {
+                tryOnError.textContent = "Please upload a photo and select a dress design first.";
+                tryOnError.classList.remove('hidden');
+                return;
+            }
+
+            tryOnError.classList.add('hidden');
+            tryOnPrompt.classList.add('hidden');
+            tryOnResultImage.classList.add('hidden');
+            tryOnLoading.classList.remove('hidden');
+            tryOnLoading.classList.add('flex');
+            generateTryOnBtn.disabled = true;
+            stylingAdviceSection.classList.add('hidden'); // Hide styling until new try-on is done
+
+            try {
+                const apiKey = "AIzaSyDs1n0k1tYoBafYWsJOEIcjjT4WPimNHqU";
+                const apiUrl = https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey};
+
+                const precisePrompt = 
+                **Task: Virtual Clothing Try-On**
+                **Input Image 1:** A photo of a person.
+                **Input Image 2:** A product photo of a single garment (a dress).
+                **Strict Instructions:**
+                1.  **Preserve Person's Identity:** You MUST preserve the person's physical identity from Input Image 1. It is critical that you DO NOT change their face, hair, body shape, skin tone, or pose. The person in the output image must be unmistakably the same person as in Input Image 1.
+                2.  **Transfer the Garment:** Take the *entire garment* from Input Image 2 and realistically fit it onto the person from Input Image 1, replacing the clothes they are currently wearing.
+                3.  **Preserve Garment's Identity:** The dress in the output image must have the exact same color, texture, pattern, and stylistic details as the dress in Input Image 2.
+                4.  **Maintain Realism and Background:** The final generated image should be photorealistic. The lighting on the new dress must match the lighting conditions of Input Image 1. The original background from Input Image 1 MUST be preserved.
+                5.  **Output:** Generate only the final, edited image of the person wearing the new dress.
+                ;
+
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: precisePrompt },
+                            { inlineData: { mimeType: "image/jpeg", data: userPhotoBase64 } }, // Person
+                            { inlineData: { mimeType: "image/png", data: selectedDressBase64 } }  // Dress
+                        ]
+                    }],
+                    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+                };
+
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) { const errorBody = await response.text(); throw new Error(API error: ${response.status} ${response.statusText}. Body: ${errorBody}); }
+
+                const result = await response.json();
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                if (base64Data) {
+                    const imageUrl = data:image/png;base64,${base64Data};
+                    tryOnResultImage.src = imageUrl;
+                    tryOnResultImage.classList.remove('hidden');
+
+                    // Show the new styling section
+                    stylingAdviceSection.classList.remove('hidden');
+                    stylingAdviceResultArea.classList.add('hidden');
+                    stylingAdviceContent.innerHTML = '';
+                    document.getElementById('styling-advice-section').scrollIntoView({ behavior: 'smooth' });
+
+                } else {
+                    const textResponse = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No image data found in response.";
+                    throw new Error(The model failed to generate an image. It might have refused the request due to safety policies or an inability to perform the complex task with the given images. Please try a different photo or design. Model response: "${textResponse}");
+                }
+            } catch (error) {
+                console.error('Error generating virtual try-on:', error);
+                tryOnError.textContent = Error: ${error.message};
+                tryOnError.classList.remove('hidden');
+                tryOnPrompt.classList.remove('hidden');
+            } finally {
+                tryOnLoading.classList.add('hidden');
+                tryOnLoading.classList.remove('flex');
+                checkTryOnButtonState();
+            }
+        }
+
+        async function getStylingAdvice() {
+            const originalPrompt = promptInput.value;
+            if (!originalPrompt) {
+                alert("Cannot get styling advice without an original dress description.");
+                return;
+            }
+
+            stylingAdviceResultArea.classList.remove('hidden');
+            stylingAdviceContent.innerHTML = '';
+            stylingError.classList.add('hidden');
+            stylingLoading.classList.remove('hidden');
+            stylingLoading.classList.add('flex');
+            getStylingAdviceBtn.disabled = true;
+
+            try {
+                const apiKey = "AIzaSyDs1n0k1tYoBafYWsJOEIcjjT4WPimNHqU";
+                const apiUrl = https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey};
+
+                const systemPrompt = "You are a world-class fashion stylist. Your tone is chic, encouraging, and helpful. Provide practical and stylish advice.";
+                const userQuery = My client has designed a dress with the following description: "${originalPrompt}". 
+                
+                Please provide styling advice to complete the look. Structure your response in markdown format with the following sections using bold headers:
+                - **Shoes:** Suggest 1-2 specific styles.
+                - **Accessories:** Suggest jewelry, a bag, or other items.
+                - **Hairstyle:** Suggest a suitable hairstyle.
+                - **Occasions:** Suggest 1-2 perfect events or settings for this outfit.
+                
+                Keep the advice concise and easy to read.;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) { const errorBody = await response.text(); throw new Error(API error: ${response.status} ${response.statusText}. Body: ${errorBody});}
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    let html = text
+                        .replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>') 
+                        .replace(/\n/g, '<br />')
+                        .replace(/<br \/>- /g, '<li>')
+                        .replace(/<br \/>\* /g, '<li>');
+                    
+                    html = <ul>${html}</ul>.replace(/<h3>/g, '</ul><h3>').replace(/<\/ul>(\s*?)<h3>/,'<h3>');
+
+                    stylingAdviceContent.innerHTML = html;
+                } else {
+                    throw new Error("The AI stylist did not provide a response.");
+                }
+
+            } catch (error) {
+                console.error('Error getting styling advice:', error);
+                stylingError.textContent = Error: ${error.message};
+                stylingError.classList.remove('hidden');
+            } finally {
+                stylingLoading.classList.add('hidden');
+                stylingLoading.classList.remove('flex');
+                getStylingAdviceBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
