@@ -271,7 +271,6 @@
             stylingAdviceSection.classList.add('hidden'); // Hide styling until new try-on is done
 
             try {
-                const apiKey = "AIzaSyDs1n0k1tYoBafYWsJOEIcjjT4WPimNHqU";
                 const apiUrl = https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey};
 
                 const precisePrompt = 
@@ -345,7 +344,7 @@
             getStylingAdviceBtn.disabled = true;
 
             try {
-                const apiKey = "AIzaSyDs1n0k1tYoBafYWsJOEIcjjT4WPimNHqU";
+                
                 const apiUrl = https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey};
 
                 const systemPrompt = "You are a world-class fashion stylist. Your tone is chic, encouraging, and helpful. Provide practical and stylish advice.";
